@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="description" content="Lunch Roulette — Swipe to vote on food dishes and see what everyone wants to eat tonight!">
+  <title>Lunch Roulette — Swipe to Vote</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎰</text></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- SWIPE VIEW -->
+  <main id="swipe-view">
+    <header id="app-header">
+      <h1>🎰 Lunch Roulette</h1>
+      <p class="subtitle">Would you eat this tonight?</p>
+    </header>
+    <div id="card-container">
+      <!-- Cards injected by JS -->
+      <div id="end-of-deck" class="hidden">
+        <div class="emoji-bounce">🎉</div>
+        <h2>All done!</h2>
+        <p>You've voted on everything.</p>
+        <button id="btn-see-results">See How Others Voted</button>
+      </div>
+    </div>
+    <div id="button-row">
+      <button id="btn-no" aria-label="No">✕</button>
+      <button id="btn-yes" aria-label="Yes">♥</button>
+    </div>
+  </main>
+
+  <!-- RESULTS VIEW -->
+  <section id="results-view" class="hidden">
+    <div id="results-header">
+      <div id="results-title-row">
+        <button id="btn-back">← Back</button>
+        <h2>📊 Results</h2>
+      </div>
+      <div id="sort-toggle">
+        <button id="sort-popular" class="active">Most Popular</button>
+        <button id="sort-divisive">Most Divisive</button>
+      </div>
+    </div>
+    <ul id="results-list">
+      <!-- Rows injected by JS -->
+    </ul>
+  </section>
+
+  <!-- LOADING STATE -->
+  <div id="loading-overlay">
+    <div class="spinner"></div>
+    <p>Loading dishes…</p>
+  </div>
+
+  <!-- Bottom Tab Bar -->
+  <nav id="tab-bar">
+    <button id="tab-swipe" class="active">🃏 Swipe</button>
+    <button id="tab-results">📊 Results</button>
+  </nav>
+
+  <!-- Scripts -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
