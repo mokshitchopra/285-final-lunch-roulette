@@ -27,15 +27,13 @@ const insertVoteStmt = db.prepare(`
 const getResultsStmt = db.prepare(`
   SELECT
     f.id, f.name, f.category, f.area, f.image_url,
-    COALESCE(SUM(CASE WHEN v.choice = 'yes' THEN 1 ELSE 0 END), 0) AS yes_count,
-    COALESCE(SUM(CASE WHEN v.choice = 'no' THEN 1 ELSE 0 END), 0) AS no_count,
-    CASE
-      WHEN COUNT(v.id) = 0 THEN 0
-      ELSE ROUND(100.0 * SUM(CASE WHEN v.choice = 'yes' THEN 1 ELSE 0 END) / COUNT(v.id), 1)
-    END AS yes_pct
+    SUM(CASE WHEN v.choice = 'yes' THEN 1 ELSE 0 END) AS yes_count,
+    SUM(CASE WHEN v.choice = 'no' THEN 1 ELSE 0 END) AS no_count,
+    ROUND(100.0 * SUM(CASE WHEN v.choice = 'yes' THEN 1 ELSE 0 END) / COUNT(v.id), 1) AS yes_pct
   FROM foods f
-  LEFT JOIN votes v ON f.id = v.food_id
+  INNER JOIN votes v ON f.id = v.food_id
   GROUP BY f.id
+  HAVING COUNT(v.id) > 0
   ORDER BY yes_pct DESC
 `);
 // ─── GET /items ──────────────────────────────────────────────

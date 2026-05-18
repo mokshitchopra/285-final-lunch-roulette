@@ -1,14 +1,15 @@
 (function () {
   // ─── State ──────────────────────────────────────────────────
-  let items = [];
-  let currentIndex = 0;
-  let votedIds = new Set();
-  let sessionId = getOrCreateSessionId();
-  let currentSort = 'popular';
-  let isVoting = false;
+  var items = [];
+  var currentIndex = 0;
+  var votedIds = new Set();
+  var sessionId = getOrCreateSessionId();
+  var currentSort = 'popular';
+  var isVoting = false;
+  var totalItemCount = 0; // Total foods in DB (for progress)
 
   // ─── DOM Elements ───────────────────────────────────────────
-  const els = {
+  var els = {
     cardContainer: document.getElementById('card-container'),
     endOfDeck: document.getElementById('end-of-deck'),
     swipeView: document.getElementById('swipe-view'),
@@ -23,12 +24,14 @@
     tabResults: document.getElementById('tab-results'),
     sortPopular: document.getElementById('sort-popular'),
     sortDivisive: document.getElementById('sort-divisive'),
-    buttonRow: document.getElementById('button-row')
+    buttonRow: document.getElementById('button-row'),
+    progressText: document.getElementById('progress-text'),
+    progressFill: document.getElementById('progress-fill')
   };
 
   // ─── Session ID ─────────────────────────────────────────────
   function getOrCreateSessionId() {
-    let id = localStorage.getItem('lunchRoulette_sessionId');
+    var id = localStorage.getItem('lunchRoulette_sessionId');
     if (!id) {
       id = crypto.randomUUID
         ? crypto.randomUUID()
@@ -42,16 +45,15 @@
   async function init() {
     showLoading(true);
     try {
-      const [itemsRes, votedRes] = await Promise.all([
-        fetch('/items'),
-        fetch('/voted/' + sessionId)
-      ]);
+      var itemsRes = await fetch('/items');
+      var votedRes = await fetch('/voted/' + sessionId);
 
       if (!itemsRes.ok) throw new Error('Failed to fetch items');
 
-      const allItems = await itemsRes.json();
-      const voted = votedRes.ok ? await votedRes.json() : [];
+      var allItems = await itemsRes.json();
+      var voted = votedRes.ok ? await votedRes.json() : [];
 
+      totalItemCount = allItems.length;
       votedIds = new Set(voted.map(function(v) { return v.food_id; }));
 
       // Filter out already-voted items
@@ -60,6 +62,7 @@
       // Shuffle for variety
       shuffleArray(items);
 
+      updateProgress();
       renderTopCards();
       preloadImages();
     } catch (err) {
@@ -106,13 +109,28 @@
     }
   }
 
-  // ─── Card Rendering ─────────────────────────────────────────
+  function escapeHtml(str) {
+    var div = document.createElement('div');
+    div.textContent = str || '';
+    return div.innerHTML;
+  }
+
+  // ─── Progress Indicator (Section 5) ─────────────────────────
+  function updateProgress() {
+    var rated = votedIds.size + currentIndex;
+    els.progressText.textContent = rated + ' / ' + totalItemCount + ' dishes rated';
+    var pct = totalItemCount > 0 ? (rated / totalItemCount) * 100 : 0;
+    els.progressFill.style.width = pct + '%';
+  }
+
+  // ─── Card Rendering (Section 3) ─────────────────────────────
   function renderTopCards() {
     // Remove only food-card elements, keep end-of-deck
     var existingCards = els.cardContainer.querySelectorAll('.food-card');
     existingCards.forEach(function(c) { c.remove(); });
 
     if (currentIndex >= items.length) {
+      // Section 4 — End of deck state
       els.endOfDeck.classList.remove('hidden');
       els.buttonRow.classList.add('hidden');
       return;
@@ -121,7 +139,7 @@
     els.endOfDeck.classList.add('hidden');
     els.buttonRow.classList.remove('hidden');
 
-    // Render up to 3 cards for stack depth
+    // Render up to 3 cards for stack depth (Section 3)
     var count = Math.min(3, items.length - currentIndex);
 
     // Render in reverse so top card (card-1) is last in DOM → visually on top
@@ -135,8 +153,8 @@
         '<div class="tint-yes"></div>' +
         '<div class="tint-no"></div>' +
         '<div class="card-gradient"></div>' +
-        '<div class="stamp stamp-yes">YES</div>' +
-        '<div class="stamp stamp-no">NO</div>' +
+        '<div class="stamp stamp-yes">✓ YES</div>' +
+        '<div class="stamp stamp-no">✗ NO</div>' +
         '<div class="card-info">' +
           '<h2>' + escapeHtml(item.name) + '</h2>' +
           '<div class="badges">' +
@@ -156,13 +174,7 @@
     preloadImages();
   }
 
-  function escapeHtml(str) {
-    var div = document.createElement('div');
-    div.textContent = str || '';
-    return div.innerHTML;
-  }
-
-  // ─── Hammer.js Swipe Logic ──────────────────────────────────
+  // ─── Hammer.js Swipe Logic (Section 2) ──────────────────────
   function attachSwipeHandler(cardEl, item) {
     var hammer = new Hammer(cardEl);
     hammer.get('pan').set({ direction: Hammer.DIRECTION_HORIZONTAL });
@@ -175,32 +187,39 @@
     hammer.on('pan', function(e) {
       if (isVoting) return;
 
+      // Section 2.1 — Rotation + translation
       var rotation = e.deltaX / 20;
       cardEl.style.transform = 'translateX(' + e.deltaX + 'px) rotate(' + rotation + 'deg)';
 
-      var progress = Math.min(Math.abs(e.deltaX) / 100, 1);
+      // Section 2.2 — Colored overlay, max opacity 0.4 at 120px
+      var progress = Math.min(Math.abs(e.deltaX) / 120, 1);
+
       if (e.deltaX > 0) {
-        stampYes.style.opacity = progress;
-        stampNo.style.opacity = 0;
-        tintYes.style.opacity = progress * 0.35;
+        tintYes.style.opacity = progress * 0.4;
         tintNo.style.opacity = 0;
+        // Section 2.3 — Show "✓ YES" stamp after 40px drag right (top-right)
+        stampYes.style.opacity = e.deltaX > 40 ? progress : 0;
+        stampNo.style.opacity = 0;
       } else {
-        stampNo.style.opacity = progress;
-        stampYes.style.opacity = 0;
-        tintNo.style.opacity = progress * 0.35;
+        tintNo.style.opacity = progress * 0.4;
         tintYes.style.opacity = 0;
+        // Section 2.3 — Show "✗ NO" stamp after 40px drag left (top-left)
+        stampNo.style.opacity = e.deltaX < -40 ? progress : 0;
+        stampYes.style.opacity = 0;
       }
     });
 
     hammer.on('panend', function(e) {
       if (isVoting) return;
 
+      // Section 2.4 — Commit if > 80px, else snap back
       if (Math.abs(e.deltaX) > 80) {
         var choice = e.deltaX > 0 ? 'yes' : 'no';
         var dir = e.deltaX > 0 ? 'right' : 'left';
         commitVote(item.id, choice);
         animateCardOut(cardEl, dir);
       } else {
+        // Section 2.4 — Spring snap-back
         snapBack(cardEl, stampYes, stampNo, tintYes, tintNo);
       }
     });
@@ -210,21 +229,23 @@
     cardEl.classList.add(direction === 'right' ? 'fly-out-right' : 'fly-out-left');
     cardEl.addEventListener('animationend', function() {
       currentIndex++;
+      updateProgress(); // Section 5 — Update counter after every swipe
       renderTopCards();
     });
   }
 
+  // Section 2.4 — Spring animation snap-back
   function snapBack(cardEl, stampYes, stampNo, tintYes, tintNo) {
-    cardEl.style.transition = 'transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+    cardEl.style.transition = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
     cardEl.style.transform = 'translateX(0) rotate(0deg)';
     stampYes.style.opacity = 0;
     stampNo.style.opacity = 0;
     tintYes.style.opacity = 0;
     tintNo.style.opacity = 0;
-    // Remove the transition after snap-back completes so drag feels direct
+    // Remove transition after snap-back so drag feels direct
     setTimeout(function() {
       cardEl.style.transition = '';
-    }, 350);
+    }, 300);
   }
 
   // ─── Voting ─────────────────────────────────────────────────
@@ -294,7 +315,7 @@
   els.btnBack.addEventListener('click', showSwipeView);
   els.btnSeeResults.addEventListener('click', showResultsView);
 
-  // ─── Results ────────────────────────────────────────────────
+  // ─── Results (Section 1) ────────────────────────────────────
   var currentResults = [];
 
   async function loadResults() {
@@ -315,10 +336,17 @@
   function renderResultsList() {
     els.resultsList.innerHTML = '';
 
-    var sorted = currentResults.slice();
+    // Section 1 — Filter out items with 0 total votes
+    var voted = currentResults.filter(function(item) {
+      return (item.yes_count + item.no_count) > 0;
+    });
+
+    // Sort
+    var sorted = voted.slice();
     if (currentSort === 'popular') {
       sorted.sort(function(a, b) { return b.yes_pct - a.yes_pct; });
     } else {
+      // Section 1 — Most Divisive: closest yes_pct to 50
       sorted.sort(function(a, b) {
         return Math.abs(a.yes_pct - 50) - Math.abs(b.yes_pct - 50);
       });
