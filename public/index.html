@@ -3,45 +3,43 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="description" content="Lunch Roulette — Swipe to vote on food dishes and see what everyone wants to eat tonight!">
+  <meta name="description" content="Lunch Roulette — Swipe to vote on dishes and see what everyone wants to eat tonight.">
   <title>Lunch Roulette — Swipe to Vote</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎰</text></svg>">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <!-- SWIPE VIEW -->
   <main id="swipe-view">
     <header id="app-header">
       <h1>🎰 Lunch Roulette</h1>
-      <p class="subtitle">Would you eat this tonight?</p>
+      <span class="sub">·</span>
+      <span class="sub">Would you eat this tonight?</span>
     </header>
 
-    <!-- Progress Indicator (Section 5) -->
     <div id="progress-indicator">
       <span id="progress-text">0 / 0 dishes rated</span>
-      <div id="progress-track">
+      <div id="progress-track-outer">
         <div id="progress-fill"></div>
       </div>
     </div>
 
     <div id="card-container">
-      <!-- Cards injected by JS -->
       <div id="end-of-deck" class="hidden">
-        <div class="emoji-bounce">🎉</div>
+        <div class="emoji-big">🎉</div>
         <h2>You've tasted them all!</h2>
         <p>See how your votes compare to everyone else</p>
         <button id="btn-see-results">View Results →</button>
       </div>
     </div>
+
     <div id="button-row">
       <button id="btn-no" aria-label="No">✕</button>
       <button id="btn-yes" aria-label="Yes">♥</button>
     </div>
   </main>
 
-  <!-- RESULTS VIEW -->
   <section id="results-view" class="hidden">
     <div id="results-header">
       <div id="results-title-row">
@@ -53,24 +51,19 @@
         <button id="sort-divisive">Most Divisive</button>
       </div>
     </div>
-    <ul id="results-list">
-      <!-- Rows injected by JS -->
-    </ul>
+    <ul id="results-list"></ul>
   </section>
 
-  <!-- LOADING STATE -->
   <div id="loading-overlay">
     <div class="spinner"></div>
     <p>Loading dishes…</p>
   </div>
 
-  <!-- Bottom Tab Bar -->
   <nav id="tab-bar">
     <button id="tab-swipe" class="active">🃏 Swipe</button>
     <button id="tab-results">📊 Results</button>
   </nav>
 
-  <!-- Scripts -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
   <script src="app.js"></script>
 </body>
