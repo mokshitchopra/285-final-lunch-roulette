@@ -34,12 +34,12 @@
 
   // ─── Session ────────────────────────────────────────────────
   function getOrCreateSessionId() {
-    let id = localStorage.getItem('lunchRoulette_sessionId');
+    let id = localStorage.getItem('lunchRoulette_sessionId_v3');
     if (!id) {
       id = crypto.randomUUID
         ? crypto.randomUUID()
         : 'id-' + Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
-      localStorage.setItem('lunchRoulette_sessionId', id);
+      localStorage.setItem('lunchRoulette_sessionId_v3', id);
     }
     return id;
   }
@@ -368,26 +368,37 @@
 
     list.forEach((item, idx) => {
       const total = item.yes_count + item.no_count;
+      const pct = item.yes_pct;
       const li = document.createElement('li');
-      li.className = 'result-row';
+      li.className = 'result-item';
       li.innerHTML =
+        '<div class="result-rank">#' + (idx + 1) + '</div>' +
         '<img src="' + item.image_url + '" class="result-thumb" alt="' + escapeHtml(item.name) + '" loading="lazy">' +
         '<div class="result-info">' +
-          '<div class="result-name">' + escapeHtml(item.name) +
+          '<div class="result-name-row">' +
+            '<span class="result-name">' + escapeHtml(item.name) + '</span>' +
             '<span class="result-badge">' + escapeHtml(item.category) + '</span>' +
           '</div>' +
-          '<div class="progress-track"><div class="progress-fill" style="width:0%"></div></div>' +
-          '<div class="result-stats">' +
-            '<span class="result-pct">' + item.yes_pct + '% YES</span>' +
-            '<span>' + total + ' vote' + (total !== 1 ? 's' : '') + '</span>' +
+          '<div class="result-bar-track">' +
+            '<div class="result-bar-fill" data-width="' + pct + '" style="width:0%"></div>' +
+          '</div>' +
+          '<div class="result-meta">' +
+            '<span class="result-pct">' + pct + '% YES</span>' +
+            '<span class="result-votes">' + total + ' vote' + (total !== 1 ? 's' : '') + '</span>' +
           '</div>' +
         '</div>';
       els.resultsList.appendChild(li);
+    });
 
-      setTimeout(() => {
-        const fill = li.querySelector('.progress-fill');
-        if (fill) fill.style.width = item.yes_pct + '%';
-      }, 20 + idx * 15);
+    // Staggered bar animation with color coding
+    const fills = els.resultsList.querySelectorAll('.result-bar-fill');
+    fills.forEach((fill, i) => {
+      const w = parseFloat(fill.getAttribute('data-width'));
+      // Color-code by approval
+      if (w >= 70) fill.style.background = '#4eff8c';
+      else if (w >= 40) fill.style.background = '#ffd60a';
+      else fill.style.background = '#ff4f4f';
+      setTimeout(() => { fill.style.width = w + '%'; }, i * 30);
     });
   }
 

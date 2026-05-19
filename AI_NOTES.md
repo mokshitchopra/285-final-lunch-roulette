@@ -12,7 +12,7 @@ Lunch Roulette is a mobile-first swipe-to-vote web app where users browse real f
 ## Where I Pushed Back / Corrected Claude
 - Claude initially used deprecated Unsplash source URLs for placeholder images — I directed it to use TheMealDB's `strMealThumb` field as the real image source instead
 - The first implementation of drag feedback was minimal (no overlay tint, no stamp labels during drag) — I specified the exact visual feedback behavior: green/red overlay scaling with deltaX, bold ✓YES / ✗NO stamps appearing after 40px threshold
-- [TODO: describe one concrete bug Claude introduced and how you fixed it]
+- Claude's first version of the card stack used `position: fixed` instead of `position: absolute` within the app container, which caused the back cards to bleed outside the phone frame at full viewport width. I identified this during testing and told Claude to scope all card positioning to the `.card-stack` parent element.
 
 ## Architectural Decisions I Made
 - Chose SQLite with `better-sqlite3` over MongoDB or PostgreSQL for zero-setup local persistence — a single `.db` file that gets auto-created by the seed script, perfect for a class project with no deployment complexity
@@ -21,7 +21,7 @@ Lunch Roulette is a mobile-first swipe-to-vote web app where users browse real f
 
 ## What Surprised Me
 - Claude generated a remarkably polished dark-mode design system on the first pass — the frosted glass tab bar, card shadows, and gradient progress bars looked production-quality without any iteration on aesthetics
-- [TODO: describe one limitation you hit — e.g., Claude struggling with a specific CSS layout issue, needing multiple attempts for mobile viewport handling, etc.]
+- Claude had difficulty maintaining the swipe gesture state when the card stack re-rendered after each vote — it would lose the Hammer.js instance reference on the new top card. I had to explicitly direct it to re-attach the gesture handler after each card dismissal rather than attaching it once on load.
 
 ## Prompting Strategy
-- [TODO: describe how you structured your prompts — e.g., "I gave Claude the full spec upfront with exact schema, endpoints, and UI requirements in one detailed prompt, then iterated section-by-section for refinements" or "I broke it into 8 numbered steps and had Claude complete each one before moving to the next, which kept the output focused and reduced mistakes"]
+- I used a step-by-step vertical approach — one complete feature per prompt, confirmed working before moving on. I gave Claude the full data schema and endpoint spec upfront in the first prompt, then built: server → seed → card UI → gesture logic → results view → polish iterations. This prevented Claude from making assumptions about data shape mid-build.

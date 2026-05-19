@@ -17,7 +17,7 @@ const db = new Database(dbPath);
 db.pragma('journal_mode = WAL');
 
 // Prepared Statements
-const getItemsStmt = db.prepare('SELECT id, name, category, area, image_url FROM foods ORDER BY id');
+const getItemsStmt = db.prepare('SELECT id, name, category, area, image_url FROM foods ORDER BY id LIMIT 100');
 const getVotedStmt = db.prepare('SELECT food_id FROM votes WHERE session_id = ?');
 const insertVoteStmt = db.prepare(`
   INSERT INTO votes (food_id, choice, session_id)
